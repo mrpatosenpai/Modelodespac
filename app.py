@@ -63,7 +63,7 @@ def predict():
             logger.error("No se pudo cargar la imagen")
             os.remove(temp_path)
             return jsonify({"error": "No se pudo cargar la imagen"}), 400
-        
+
         logger.info("Convertir la imagen de BGR a RGB")
         # Convertir la imagen de BGR a RGB
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
