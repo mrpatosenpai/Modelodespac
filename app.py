@@ -1,3 +1,4 @@
+import logging
 from flask import Flask, request, jsonify
 import cv2
 import numpy as np
@@ -6,6 +7,10 @@ import tempfile
 import os
 
 app = Flask(__name__)
+
+# Configuración del logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Inicializar Mediapipe Face Mesh
 mp_face_mesh = mp.solutions.face_mesh
@@ -39,24 +44,31 @@ def detect_wrinkles(region):
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        file = request.files['file']
-        if file is None:
+        logger.info("Recibiendo la solicitud de predicción")
+        file = request.files.get('file')
+        if not file:
+            logger.error("No se ha proporcionado ningún archivo")
             return jsonify({"error": "No se ha proporcionado ningún archivo"}), 400
 
+        logger.info("Guardando archivo temporalmente")
         # Guardar el archivo temporalmente
         with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_file:
             temp_file.write(file.read())
             temp_path = temp_file.name
 
+        logger.info("Cargando imagen con OpenCV")
         # Cargar la imagen con OpenCV
         image = cv2.imread(temp_path)
         if image is None:
+            logger.error("No se pudo cargar la imagen")
             os.remove(temp_path)
             return jsonify({"error": "No se pudo cargar la imagen"}), 400
         
+        logger.info("Convertir la imagen de BGR a RGB")
         # Convertir la imagen de BGR a RGB
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
+        logger.info("Procesando la imagen para detección de puntos clave")
         # Procesar la imagen para detección de puntos clave
         results = face_mesh.process(image_rgb)
 
@@ -64,6 +76,7 @@ def predict():
 
         # Procesar los rostros detectados
         if results.multi_face_landmarks:
+            logger.info("Detectando rostros")
             for face_landmarks in results.multi_face_landmarks:
                 h, w, _ = image.shape
 
@@ -97,6 +110,8 @@ def predict():
                 # Limpiar archivo temporal
                 os.remove(temp_path)
 
+                logger.info(f"Ojeras: {ojeras}, Arrugas: {arrugas}, Promedio: {promedio}, Estado: {estado}")
+
                 return jsonify({
                     "ojeras": round(ojeras, 2),
                     "arrugas": round(arrugas, 2),
@@ -105,9 +120,11 @@ def predict():
                 })
 
         os.remove(temp_path)
+        logger.error("No se detectaron rostros en la imagen")
         return jsonify({"error": "No se detectaron rostros en la imagen"}), 400
 
     except Exception as e:
+        logger.exception("Ocurrió un error durante el procesamiento")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
