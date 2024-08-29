@@ -16,27 +16,39 @@ logger = logging.getLogger(__name__)
 mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, min_detection_confidence=0.5)
 
+def preprocess_image(image):
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    normalized_image = cv2.equalizeHist(gray_image)
+    return normalized_image
+
+def morph_operations(thresh):
+    kernel = np.ones((5, 5), np.uint8)
+    closing = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+    return closing
+
 def detect_dark_areas(region):
-    gray_region = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY)
-    alpha = 1.5  # Factor de contraste
-    beta = -50 
+    gray_region = preprocess_image(region)
+    alpha = 2.0  # Ajustar la intensidad
+    beta = -30    # Ajustar el brillo
     adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
-    blurred_region = cv2.GaussianBlur(adjusted_region, (5, 5), 0)
-    _, thresh = cv2.threshold(blurred_region, 60, 255, cv2.THRESH_BINARY_INV)
-    dark_areas = cv2.countNonZero(thresh)
+    blurred_region = cv2.GaussianBlur(adjusted_region, (7, 7), 0)  # Aumentar el desenfoque
+    adaptive_thresh = cv2.adaptiveThreshold(blurred_region, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
+    morphed_region = morph_operations(adaptive_thresh)
+    dark_areas = cv2.countNonZero(morphed_region)
     total_area = region.shape[0] * region.shape[1]
     percentage_oje = (dark_areas / total_area) * 100
     return percentage_oje
 
 def detect_wrinkles(region):
-    gray_region = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY)
-    alpha = 2.0  # Factor de contraste
-    beta = -50 
+    gray_region = preprocess_image(region)
+    alpha = 2.5  # Aumentar la sensibilidad
+    beta = -30
     adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
-    blurred_region = cv2.GaussianBlur(adjusted_region, (3, 3), 0)  # Cambiar a (3,3) para menos suavizado
-    edges = cv2.Canny(blurred_region, 30, 100)  # Ajustar bordes
-    _, thresh = cv2.threshold(edges, 50, 255, cv2.THRESH_BINARY)
-    wrinkles = cv2.countNonZero(thresh)
+    blurred_region = cv2.GaussianBlur(adjusted_region, (5, 5), 0)  # Cambiar a (5,5) para más suavizado
+    edges = cv2.Canny(blurred_region, 40, 120)  # Ajustar los umbrales de Canny
+    adaptive_thresh = cv2.adaptiveThreshold(edges, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)  # Usar umbral adaptativo
+    morphed_region = morph_operations(adaptive_thresh)
+    wrinkles = cv2.countNonZero(morphed_region)
     total_area = region.shape[0] * region.shape[1]
     percentage_arr = (wrinkles / total_area) * 100
     return percentage_arr
@@ -96,11 +108,11 @@ def predict():
                 arrugas = detect_wrinkles(face_roi_profile)
 
                 # Análisis del porcentaje
-                if 0 <= int(ojeras) <= 10 or 0 <= int(arrugas) <= 20:
+                if 0 <= int(ojeras) <= 10 or 0 <= int(arrugas) <= 15:
                     estado = "Normal"
-                elif 11 <= int(ojeras) <= 20 or 21 <= int(arrugas) <= 30:
+                elif 10 <= int(ojeras) <= 20 or 16 <= int(arrugas) <= 25:
                     estado = "Falta de sueño o estrés"
-                elif 21 <= int(ojeras) <= 30 or 31 <= int(arrugas) <= 40:
+                elif 26 <= int(ojeras) <= 34 or 26 <= int(arrugas) <= 34:
                     estado = "Consumo moderado"
                 else:
                     estado = "Consumo alto"
