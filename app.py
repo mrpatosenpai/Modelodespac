@@ -21,34 +21,27 @@ def preprocess_image(image):
     normalized_image = cv2.equalizeHist(gray_image)
     return normalized_image
 
-def morph_operations(thresh):
-    kernel = np.ones((5, 5), np.uint8)
-    closing = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
-    return closing
-
 def detect_dark_areas(region):
     gray_region = preprocess_image(region)
-    alpha = 1.5  # Menor ajuste para personas jóvenes
-    beta = -20   # Menor brillo para destacar ojeras
+    alpha = 1.3  # Ajustado para personas jóvenes
+    beta = -10   # Ajustado para destacar ojeras
     adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
     blurred_region = cv2.GaussianBlur(adjusted_region, (5, 5), 0)  # Moderado desenfoque
     adaptive_thresh = cv2.adaptiveThreshold(blurred_region, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
-    morphed_region = morph_operations(adaptive_thresh)
-    dark_areas = cv2.countNonZero(morphed_region)
+    dark_areas = cv2.countNonZero(adaptive_thresh)
     total_area = region.shape[0] * region.shape[1]
     percentage_oje = (dark_areas / total_area) * 100
     return percentage_oje
 
 def detect_wrinkles(region):
     gray_region = preprocess_image(region)
-    alpha = 1.8  # Menor sensibilidad para personas jóvenes
-    beta = -20
+    alpha = 1.5  # Ajustado para personas jóvenes
+    beta = -10
     adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
     blurred_region = cv2.GaussianBlur(adjusted_region, (5, 5), 0)  # Moderado desenfoque
     edges = cv2.Canny(blurred_region, 30, 100)  # Ajuste para detectar detalles sutiles
     adaptive_thresh = cv2.adaptiveThreshold(edges, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-    morphed_region = morph_operations(adaptive_thresh)
-    wrinkles = cv2.countNonZero(morphed_region)
+    wrinkles = cv2.countNonZero(adaptive_thresh)
     total_area = region.shape[0] * region.shape[1]
     percentage_arr = (wrinkles / total_area) * 100
     return percentage_arr
