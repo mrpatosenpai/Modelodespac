@@ -22,7 +22,7 @@ def detect_dark_areas(region):
         alpha = 1.2
         beta = -20
         adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
-        blurred_region = cv2.GaussianBlur(adjusted_region, (3, 3), 0)  # Ajuste del suavizado
+        blurred_region = cv2.GaussianBlur(adjusted_region, (5, 5), 0)  # Ajuste del suavizado
         _, thresh = cv2.threshold(blurred_region, 50, 255, cv2.THRESH_BINARY_INV)  # Ajuste del umbral
         dark_areas = cv2.countNonZero(thresh)
         total_area = region.shape[0] * region.shape[1]
@@ -35,11 +35,11 @@ def detect_dark_areas(region):
 def detect_wrinkles(region):
     try:
         gray_region = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY)
-        alpha = 1.5
-        beta = -30
+        alpha = 2.0
+        beta = -50
         adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
-        blurred_region = cv2.GaussianBlur(adjusted_region, (5, 5), 0)  # Ajustar suavizado
-        edges = cv2.Canny(blurred_region, 50, 150)  # Ajustar bordes
+        blurred_region = cv2.GaussianBlur(adjusted_region, (3, 3), 0)  # Ajustar suavizado
+        edges = cv2.Canny(blurred_region, 30, 150)  # Ajustar bordes
         _, thresh = cv2.threshold(edges, 50, 255, cv2.THRESH_BINARY)  # Ajuste del umbral
         wrinkles = cv2.countNonZero(thresh)
         total_area = region.shape[0] * region.shape[1]
