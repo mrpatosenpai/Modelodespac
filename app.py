@@ -28,10 +28,10 @@ def morph_operations(thresh):
 
 def detect_dark_areas(region):
     gray_region = preprocess_image(region)
-    alpha = 2.0  # Ajustar la intensidad
-    beta = -30    # Ajustar el brillo
+    alpha = 1.5  # Menor ajuste para personas jóvenes
+    beta = -20   # Menor brillo para destacar ojeras
     adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
-    blurred_region = cv2.GaussianBlur(adjusted_region, (7, 7), 0)  # Aumentar el desenfoque
+    blurred_region = cv2.GaussianBlur(adjusted_region, (5, 5), 0)  # Moderado desenfoque
     adaptive_thresh = cv2.adaptiveThreshold(blurred_region, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
     morphed_region = morph_operations(adaptive_thresh)
     dark_areas = cv2.countNonZero(morphed_region)
@@ -41,12 +41,12 @@ def detect_dark_areas(region):
 
 def detect_wrinkles(region):
     gray_region = preprocess_image(region)
-    alpha = 2.5  # Aumentar la sensibilidad
-    beta = -30
+    alpha = 1.8  # Menor sensibilidad para personas jóvenes
+    beta = -20
     adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
-    blurred_region = cv2.GaussianBlur(adjusted_region, (5, 5), 0)  # Cambiar a (5,5) para más suavizado
-    edges = cv2.Canny(blurred_region, 40, 120)  # Ajustar los umbrales de Canny
-    adaptive_thresh = cv2.adaptiveThreshold(edges, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)  # Usar umbral adaptativo
+    blurred_region = cv2.GaussianBlur(adjusted_region, (5, 5), 0)  # Moderado desenfoque
+    edges = cv2.Canny(blurred_region, 30, 100)  # Ajuste para detectar detalles sutiles
+    adaptive_thresh = cv2.adaptiveThreshold(edges, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
     morphed_region = morph_operations(adaptive_thresh)
     wrinkles = cv2.countNonZero(morphed_region)
     total_area = region.shape[0] * region.shape[1]
@@ -108,11 +108,11 @@ def predict():
                 arrugas = detect_wrinkles(face_roi_profile)
 
                 # Análisis del porcentaje
-                if 0 <= int(ojeras) <= 10 or 0 <= int(arrugas) <= 15:
+                if 0 <= int(ojeras) <= 8 or 0 <= int(arrugas) <= 10:
                     estado = "Normal"
-                elif 10 <= int(ojeras) <= 20 or 16 <= int(arrugas) <= 25:
+                elif 9 <= int(ojeras) <= 15 or 11 <= int(arrugas) <= 18:
                     estado = "Falta de sueño o estrés"
-                elif 26 <= int(ojeras) <= 34 or 26 <= int(arrugas) <= 34:
+                elif 16 <= int(ojeras) <= 25 or 19 <= int(arrugas) <= 25:
                     estado = "Consumo moderado"
                 else:
                     estado = "Consumo alto"
