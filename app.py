@@ -21,7 +21,7 @@ def detect_dark_areas(region):
     alpha = 1.2  # Menor factor de contraste
     beta = -20  # Menor ajuste de brillo
     adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
-    blurred_region = cv2.GaussianBlur(adjusted_region, (5, 5), 0)
+    blurred_region = cv2.GaussianBlur(adjusted_region, (1, 1), 0)
     _, thresh = cv2.threshold(blurred_region, 80, 255, cv2.THRESH_BINARY_INV)  # Ajuste del umbral
     dark_areas = cv2.countNonZero(thresh)
     total_area = region.shape[0] * region.shape[1]
