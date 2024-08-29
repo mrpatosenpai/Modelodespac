@@ -23,7 +23,7 @@ def detect_dark_areas(region):
         beta = -20
         adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
         blurred_region = cv2.GaussianBlur(adjusted_region, (5, 5), 0)  # Ajuste del suavizado
-        _, thresh = cv2.threshold(blurred_region, 25, 255, cv2.THRESH_BINARY_INV)  # Ajuste del umbral
+        _, thresh = cv2.threshold(blurred_region, 75, 255, cv2.THRESH_BINARY_INV)  # Ajuste del umbral
         dark_areas = cv2.countNonZero(thresh)
         total_area = region.shape[0] * region.shape[1]
         percentage_oje = (dark_areas / total_area) * 100
