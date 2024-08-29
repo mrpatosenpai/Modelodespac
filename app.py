@@ -18,8 +18,8 @@ face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, min_d
 
 def detect_dark_areas(region):
     gray_region = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY)
-    alpha = 2.0
-    beta = -30
+    alpha = 1.5  # Factor de contraste
+    beta = -50 
     adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
     blurred_region = cv2.GaussianBlur(adjusted_region, (5, 5), 0)
     _, thresh = cv2.threshold(blurred_region, 60, 255, cv2.THRESH_BINARY_INV)
@@ -30,8 +30,8 @@ def detect_dark_areas(region):
 
 def detect_wrinkles(region):
     gray_region = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY)
-    alpha = 2.5  # Aumentar sensibilidad para detectar arrugas
-    beta = -30
+    alpha = 2.0  # Factor de contraste
+    beta = -50 
     adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
     blurred_region = cv2.GaussianBlur(adjusted_region, (3, 3), 0)  # Cambiar a (3,3) para menos suavizado
     edges = cv2.Canny(blurred_region, 30, 100)  # Ajustar bordes
