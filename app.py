@@ -18,11 +18,11 @@ face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, min_d
 
 def detect_dark_areas(region):
     gray_region = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY)
-    alpha = 1.3  # Factor de contraste
-    beta = -10 
+    alpha = 1.2  # Menor factor de contraste
+    beta = -20  # Menor ajuste de brillo
     adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
     blurred_region = cv2.GaussianBlur(adjusted_region, (5, 5), 0)
-    _, thresh = cv2.threshold(blurred_region, 60, 255, cv2.THRESH_BINARY_INV)
+    _, thresh = cv2.threshold(blurred_region, 80, 255, cv2.THRESH_BINARY_INV)  # Ajuste del umbral
     dark_areas = cv2.countNonZero(thresh)
     total_area = region.shape[0] * region.shape[1]
     percentage_oje = (dark_areas / total_area) * 100
@@ -30,12 +30,12 @@ def detect_dark_areas(region):
 
 def detect_wrinkles(region):
     gray_region = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY)
-    alpha = 1.5  # Factor de contraste
-    beta = -10 
+    alpha = 1.5  # Menor factor de contraste
+    beta = -20  # Menor ajuste de brillo
     adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
-    blurred_region = cv2.GaussianBlur(adjusted_region, (3, 3), 0)  # Cambiar a (3,3) para menos suavizado
-    edges = cv2.Canny(blurred_region, 30, 100)  # Ajustar bordes
-    _, thresh = cv2.threshold(edges, 50, 255, cv2.THRESH_BINARY)
+    blurred_region = cv2.GaussianBlur(adjusted_region, (3, 3), 0)  # Menor suavizado
+    edges = cv2.Canny(blurred_region, 50, 150)  # Ajustar bordes
+    _, thresh = cv2.threshold(edges, 80, 255, cv2.THRESH_BINARY)  # Ajuste del umbral
     wrinkles = cv2.countNonZero(thresh)
     total_area = region.shape[0] * region.shape[1]
     percentage_arr = (wrinkles / total_area) * 100
@@ -96,11 +96,11 @@ def predict():
                 arrugas = detect_wrinkles(face_roi_profile)
 
                 # Análisis del porcentaje
-                if 0 <= int(ojeras) <= 8 or 0 <= int(arrugas) <= 10:
+                if 0 <= int(ojeras) <= 5 or 0 <= int(arrugas) <= 10:
                     estado = "Normal"
-                elif 9 <= int(ojeras) <= 15 or 11 <= int(arrugas) <= 18:
+                elif 6 <= int(ojeras) <= 10 or 11 <= int(arrugas) <= 15:
                     estado = "Falta de sueño o estrés"
-                elif 16 <= int(ojeras) <= 25 or 19 <= int(arrugas) <= 25:
+                elif 11 <= int(ojeras) <= 20 or 16 <= int(arrugas) <= 25:
                     estado = "Consumo moderado"
                 else:
                     estado = "Consumo alto"
@@ -129,3 +129,4 @@ def predict():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
