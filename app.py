@@ -30,12 +30,12 @@ def detect_dark_areas(region):
 
 def detect_wrinkles(region):
     gray_region = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY)
-    alpha = 2.0
-    beta = -50
+    alpha = 2.5  # Aumentar sensibilidad para detectar arrugas
+    beta = -30
     adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
-    blurred_region = cv2.GaussianBlur(adjusted_region, (1, 1), 0)
-    edges = cv2.Canny(blurred_region, 50, 150)
-    _, thresh = cv2.threshold(edges, 100, 255, cv2.THRESH_BINARY)
+    blurred_region = cv2.GaussianBlur(adjusted_region, (3, 3), 0)  # Cambiar a (3,3) para menos suavizado
+    edges = cv2.Canny(blurred_region, 30, 100)  # Ajustar bordes
+    _, thresh = cv2.threshold(edges, 50, 255, cv2.THRESH_BINARY)
     wrinkles = cv2.countNonZero(thresh)
     total_area = region.shape[0] * region.shape[1]
     percentage_arr = (wrinkles / total_area) * 100
@@ -96,11 +96,11 @@ def predict():
                 arrugas = detect_wrinkles(face_roi_profile)
 
                 # Análisis del porcentaje
-                if 0 <= int(ojeras) <= 10 or 0 <= int(arrugas) <= 15:
+                if 0 <= int(ojeras) <= 10 or 0 <= int(arrugas) <= 20:
                     estado = "Normal"
-                elif 10 <= int(ojeras) <= 20 or 16 <= int(arrugas) <= 25:
+                elif 11 <= int(ojeras) <= 20 or 21 <= int(arrugas) <= 30:
                     estado = "Falta de sueño o estrés"
-                elif 26 <= int(ojeras) <= 34 or 26 <= int(arrugas) <= 34:
+                elif 21 <= int(ojeras) <= 30 or 31 <= int(arrugas) <= 40:
                     estado = "Consumo moderado"
                 else:
                     estado = "Consumo alto"
