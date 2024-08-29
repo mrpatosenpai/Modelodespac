@@ -34,7 +34,7 @@ def detect_wrinkles(region):
     beta = -50  # Menor ajuste de brillo
     adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
     blurred_region = cv2.GaussianBlur(adjusted_region, (3, 3), 0)  # Menor suavizado
-    edges = cv2.Canny(blurred_region, 20, 100)  # Ajustar bordes
+    edges = cv2.Canny(blurred_region, 30, 150)  # Ajustar bordes
     _, thresh = cv2.threshold(edges, 50, 255, cv2.THRESH_BINARY)  # Ajuste del umbral
     wrinkles = cv2.countNonZero(thresh)
     total_area = region.shape[0] * region.shape[1]
