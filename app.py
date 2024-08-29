@@ -17,29 +17,37 @@ mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, min_detection_confidence=0.5)
 
 def detect_dark_areas(region):
-    gray_region = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY)
-    alpha = 1.2  # Menor factor de contraste
-    beta = -20  # Menor ajuste de brillo
-    adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
-    blurred_region = cv2.GaussianBlur(adjusted_region, (1, 1), 0)
-    _, thresh = cv2.threshold(blurred_region, 80, 255, cv2.THRESH_BINARY_INV)  # Ajuste del umbral
-    dark_areas = cv2.countNonZero(thresh)
-    total_area = region.shape[0] * region.shape[1]
-    percentage_oje = (dark_areas / total_area) * 100
-    return percentage_oje
+    try:
+        gray_region = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY)
+        alpha = 1.2
+        beta = -20
+        adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
+        blurred_region = cv2.GaussianBlur(adjusted_region, (3, 3), 0)  # Ajuste del suavizado
+        _, thresh = cv2.threshold(blurred_region, 50, 255, cv2.THRESH_BINARY_INV)  # Ajuste del umbral
+        dark_areas = cv2.countNonZero(thresh)
+        total_area = region.shape[0] * region.shape[1]
+        percentage_oje = (dark_areas / total_area) * 100
+        return percentage_oje
+    except Exception as e:
+        logger.error(f"Error al detectar áreas oscuras: {e}")
+        return 0
 
 def detect_wrinkles(region):
-    gray_region = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY)
-    alpha = 2.0  # Menor factor de contraste
-    beta = -50  # Menor ajuste de brillo
-    adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
-    blurred_region = cv2.GaussianBlur(adjusted_region, (3, 3), 0)  # Menor suavizado
-    edges = cv2.Canny(blurred_region, 30, 150)  # Ajustar bordes
-    _, thresh = cv2.threshold(edges, 50, 255, cv2.THRESH_BINARY)  # Ajuste del umbral
-    wrinkles = cv2.countNonZero(thresh)
-    total_area = region.shape[0] * region.shape[1]
-    percentage_arr = (wrinkles / total_area) * 100
-    return percentage_arr
+    try:
+        gray_region = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY)
+        alpha = 1.5
+        beta = -30
+        adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
+        blurred_region = cv2.GaussianBlur(adjusted_region, (5, 5), 0)  # Ajustar suavizado
+        edges = cv2.Canny(blurred_region, 50, 150)  # Ajustar bordes
+        _, thresh = cv2.threshold(edges, 50, 255, cv2.THRESH_BINARY)  # Ajuste del umbral
+        wrinkles = cv2.countNonZero(thresh)
+        total_area = region.shape[0] * region.shape[1]
+        percentage_arr = (wrinkles / total_area) * 100
+        return percentage_arr
+    except Exception as e:
+        logger.error(f"Error al detectar arrugas: {e}")
+        return 0
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -51,13 +59,11 @@ def predict():
             return jsonify({"error": "No se ha proporcionado ningún archivo"}), 400
 
         logger.info("Guardando archivo temporalmente")
-        # Guardar el archivo temporalmente
         with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_file:
             temp_file.write(file.read())
             temp_path = temp_file.name
 
         logger.info("Cargando imagen con OpenCV")
-        # Cargar la imagen con OpenCV
         image = cv2.imread(temp_path)
         if image is None:
             logger.error("No se pudo cargar la imagen")
@@ -65,16 +71,13 @@ def predict():
             return jsonify({"error": "No se pudo cargar la imagen"}), 400
 
         logger.info("Convertir la imagen de BGR a RGB")
-        # Convertir la imagen de BGR a RGB
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         logger.info("Procesando la imagen para detección de puntos clave")
-        # Procesar la imagen para detección de puntos clave
         results = face_mesh.process(image_rgb)
 
         ojeras = arrugas = None
 
-        # Procesar los rostros detectados
         if results.multi_face_landmarks:
             logger.info("Detectando rostros")
             for face_landmarks in results.multi_face_landmarks:
@@ -86,28 +89,26 @@ def predict():
                 eye_points_profile = [(int(face_landmarks.landmark[i].x * w), int(face_landmarks.landmark[i].y * h)) for i in eye_indices_profile]
                 face_points_profile = [(int(face_landmarks.landmark[i].x * w), int(face_landmarks.landmark[i].y * h)) for i in face_indices_profile]
 
-                eye_roi_profile = image[min(p[1] for p in eye_points_profile):max(p[1] for p in eye_points_profile),
-                                        min(p[0] for p in eye_points_profile):max(p[0] for p in eye_points_profile)]
+                eye_roi_profile = image[max(0, min(p[1] for p in eye_points_profile)):min(h, max(p[1] for p in eye_points_profile)),
+                                        max(0, min(p[0] for p in eye_points_profile)):min(w, max(p[0] for p in eye_points_profile))]
 
-                face_roi_profile = image[min(p[1] for p in face_points_profile):max(p[1] for p in face_points_profile),
-                                         min(p[0] for p in face_points_profile):max(p[0] for p in face_points_profile)]
+                face_roi_profile = image[max(0, min(p[1] for p in face_points_profile)):min(h, max(p[1] for p in face_points_profile)),
+                                         max(0, min(p[0] for p in face_points_profile)):min(w, max(p[0] for p in face_points_profile))]
 
                 ojeras = detect_dark_areas(eye_roi_profile)
                 arrugas = detect_wrinkles(face_roi_profile)
 
-                # Análisis del porcentaje
                 if 0 <= int(ojeras) <= 10 and 0 <= int(arrugas) <= 10:
                     estado = "Normal"
                 elif 11 <= int(ojeras) <= 20 and 11 <= int(arrugas) <= 20:
                     estado = "Falta de sueño o estrés"
                 elif 21 <= int(ojeras) <= 30 and 21 <= int(arrugas) <= 30:
                     estado = "Consumo moderado"
-                elif int(ojeras)>30 and int(arrugas)>30:
+                else:
                     estado = "Consumo alto"
 
                 promedio = (ojeras + arrugas) / 2
 
-                # Limpiar archivo temporal
                 os.remove(temp_path)
 
                 logger.info(f"Ojeras: {ojeras}, Arrugas: {arrugas}, Promedio: {promedio}, Estado: {estado}")
@@ -129,4 +130,3 @@ def predict():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
