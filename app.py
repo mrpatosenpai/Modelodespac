@@ -102,7 +102,7 @@ def predict():
                     estado = "Falta de sueño o estrés"
                 elif 21 <= int(ojeras) <= 30 and 21 <= int(arrugas) <= 30:
                     estado = "Consumo moderado"
-                else:
+                elif int(ojeras) < 30 and int(arrugas)<30:
                     estado = "Consumo alto"
 
                 promedio = (ojeras + arrugas) / 2
