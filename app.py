@@ -96,11 +96,11 @@ def predict():
                 arrugas = detect_wrinkles(face_roi_profile)
 
                 # Análisis del porcentaje
-                if 0 <= int(ojeras) <= 5 or 0 <= int(arrugas) <= 10:
+                if 0 <= int(ojeras) <= 4 or 0 <= int(arrugas) <= 8:
                     estado = "Normal"
-                elif 6 <= int(ojeras) <= 10 or 11 <= int(arrugas) <= 15:
+                elif 5 <= int(ojeras) <= 9 or 9 <= int(arrugas) <= 14:
                     estado = "Falta de sueño o estrés"
-                elif 11 <= int(ojeras) <= 20 or 16 <= int(arrugas) <= 25:
+                elif 10 <= int(ojeras) <= 15 or 15 <= int(arrugas) <= 20:
                     estado = "Consumo moderado"
                 else:
                     estado = "Consumo alto"
