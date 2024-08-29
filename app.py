@@ -18,8 +18,8 @@ face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, min_d
 
 def detect_dark_areas(region):
     gray_region = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY)
-    alpha = 1.5
-    beta = -50
+    alpha = 2.0
+    beta = -30
     adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
     blurred_region = cv2.GaussianBlur(adjusted_region, (5, 5), 0)
     _, thresh = cv2.threshold(blurred_region, 60, 255, cv2.THRESH_BINARY_INV)
