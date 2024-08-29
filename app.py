@@ -16,32 +16,27 @@ logger = logging.getLogger(__name__)
 mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, min_detection_confidence=0.5)
 
-def preprocess_image(image):
-    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    normalized_image = cv2.equalizeHist(gray_image)
-    return normalized_image
-
 def detect_dark_areas(region):
-    gray_region = preprocess_image(region)
-    alpha = 1.3  # Ajustado para personas jóvenes
-    beta = -10   # Ajustado para destacar ojeras
+    gray_region = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY)
+    alpha = 1.3  # Factor de contraste
+    beta = -10 
     adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
-    blurred_region = cv2.GaussianBlur(adjusted_region, (5, 5), 0)  # Moderado desenfoque
-    adaptive_thresh = cv2.adaptiveThreshold(blurred_region, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
-    dark_areas = cv2.countNonZero(adaptive_thresh)
+    blurred_region = cv2.GaussianBlur(adjusted_region, (5, 5), 0)
+    _, thresh = cv2.threshold(blurred_region, 60, 255, cv2.THRESH_BINARY_INV)
+    dark_areas = cv2.countNonZero(thresh)
     total_area = region.shape[0] * region.shape[1]
     percentage_oje = (dark_areas / total_area) * 100
     return percentage_oje
 
 def detect_wrinkles(region):
-    gray_region = preprocess_image(region)
-    alpha = 1.5  # Ajustado para personas jóvenes
-    beta = -10
+    gray_region = cv2.cvtColor(region, cv2.COLOR_BGR2GRAY)
+    alpha = 1.5  # Factor de contraste
+    beta = -10 
     adjusted_region = cv2.convertScaleAbs(gray_region, alpha=alpha, beta=beta)
-    blurred_region = cv2.GaussianBlur(adjusted_region, (5, 5), 0)  # Moderado desenfoque
-    edges = cv2.Canny(blurred_region, 30, 100)  # Ajuste para detectar detalles sutiles
-    adaptive_thresh = cv2.adaptiveThreshold(edges, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-    wrinkles = cv2.countNonZero(adaptive_thresh)
+    blurred_region = cv2.GaussianBlur(adjusted_region, (3, 3), 0)  # Cambiar a (3,3) para menos suavizado
+    edges = cv2.Canny(blurred_region, 30, 100)  # Ajustar bordes
+    _, thresh = cv2.threshold(edges, 50, 255, cv2.THRESH_BINARY)
+    wrinkles = cv2.countNonZero(thresh)
     total_area = region.shape[0] * region.shape[1]
     percentage_arr = (wrinkles / total_area) * 100
     return percentage_arr
