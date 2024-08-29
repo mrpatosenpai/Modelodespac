@@ -97,12 +97,12 @@ def predict():
 
                 ojeras = detect_dark_areas(eye_roi_profile)
                 arrugas = detect_wrinkles(face_roi_profile)
-
-                if 0 <= int(ojeras) <= 10 and 0 <= int(arrugas) <= 10:
+                # Ajuste de condiciones para determinar el estado
+                if ojeras < 5 and arrugas < 5:
                     estado = "Normal"
-                elif 11 <= int(ojeras) <= 20 and 11 <= int(arrugas) <= 20:
+                elif ojeras < 15 and arrugas < 15:
                     estado = "Falta de sueño o estrés"
-                elif 21 <= int(ojeras) <= 30 and 21 <= int(arrugas) <= 30:
+                elif ojeras < 25 and arrugas < 25:
                     estado = "Consumo moderado"
                 else:
                     estado = "Consumo alto"
